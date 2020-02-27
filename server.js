@@ -1,14 +1,15 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const MongoClient = require("mongodb").MongoClient;
 const ObjectID = require("mongodb").ObjectID;
 const db = require("./db.js");
 
 const app = express();
 const DBurl = "mongodb://localhost:27017/";
-const DBName = "myapi"
-
+const DBName = "myapi";
 const port = 3000;
+const collection = () => {
+  return db.get().collection("artists");
+};
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -16,8 +17,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.get("/", (req, res) => res.send("Hi!"));
 
 app.get("/artists", (req, res) => {
-  db.get()
-    .collection("artists")
+  collection()
     .find()
     .toArray((err, docs) => {
       if (err) {
@@ -30,15 +30,13 @@ app.get("/artists", (req, res) => {
 });
 
 app.get("/artists/:id", (req, res) => {
-  db.get()
-    .collection("artists")
-    .findOne({ _id: ObjectID(req.params.id) }, (err, docs) => {
-      if (err) {
-        console.log(err);
-        return res.sendStatus(500);
-      }
-      res.send(docs);
-    });
+  collection().findOne({ _id: ObjectID(req.params.id) }, (err, docs) => {
+    if (err) {
+      console.log(err);
+      return res.sendStatus(500);
+    }
+    res.send(docs);
+  });
 });
 
 app.post("/artists", (req, res) => {
@@ -46,44 +44,38 @@ app.post("/artists", (req, res) => {
     name: req.body.name
   };
 
-  db.get()
-    .collection("artists")
-    .insertOne(artist, (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.sendStatus(500);
-      }
-      res.send(artist);
-    });
+  collection().insertOne(artist, (err, result) => {
+    if (err) {
+      console.log(err);
+      return res.sendStatus(500);
+    }
+    res.send(artist);
+  });
 });
 
 app.put("/artists/:id", (req, res) => {
-  db.get()
-    .collection("artists")
-    .updateOne(
-      { _id: ObjectID(req.params.id) },
-      { $set: { name: req.body.name } },
-      { upsert: true },
-      (err, result) => {
-        if (err) {
-          console.log(err);
-          return res.sendStatus(500);
-        }
-        return res.sendStatus(200);
-      }
-    );
-});
-
-app.delete("/artists/:id", (req, res) => {
-  db.get()
-    .collection("artists")
-    .deleteOne({ _id: ObjectID(req.params.id) }, (err, result) => {
+  collection().updateOne(
+    { _id: ObjectID(req.params.id) },
+    { $set: { name: req.body.name } },
+    { upsert: true },
+    (err, result) => {
       if (err) {
         console.log(err);
         return res.sendStatus(500);
       }
       return res.sendStatus(200);
-    });
+    }
+  );
+});
+
+app.delete("/artists/:id", (req, res) => {
+  collection().deleteOne({ _id: ObjectID(req.params.id) }, (err, result) => {
+    if (err) {
+      console.log(err);
+      return res.sendStatus(500);
+    }
+    return res.sendStatus(200);
+  });
 });
 
 db.connect(DBurl, DBName, err => {

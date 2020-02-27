@@ -13,7 +13,7 @@ exports.connect = (url, name, done) => {
       return done(err);
     }
     state.db = client.db(name);
-    return done();
+    done();
   });
 };
 
